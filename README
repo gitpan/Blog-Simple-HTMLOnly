@@ -70,6 +70,28 @@ DOCUMENTATION
     The remaining interface is identical to the parent module: see
     Blog::Simple.
 
+DISPLAYING A SPECIFIC BLOG
+
+It's not in the original and so I'll not add it here.
+
+Make sure the date is a C<localtime> output with spaces
+turned to underscores (C<_>).
+
+	sub render_this_blog { my ($date,$author) = (shift,shift);
+		local *IN;
+		my $xmlString;
+		unless (open IN, $blogger->{blog_base}.$date."_".$author."/blog.xml"){
+			print "Could not find blog, <pre>",
+				$blogger->{blog_base}.$date."_".$author,
+				"</pre>";
+			return undef;
+		}
+		read IN,$xmlString,-s IN;
+		close IN;
+		my $html = $blogger->transform ($FORMAT,\$xmlString);
+		print $$html;
+	}
+
 SEE ALSO
     See Blog::Simple, HTML::TokeParser.
 
