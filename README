@@ -1,0 +1,84 @@
+Blog::Simple::HTMLOnly Version 0.1
+----------------------------------
+
+Simple weblog (blogger) with just Core modules.
+
+SYNOPSIS
+            my $sbO = Blog::Simple::HTMLOnly->new();
+            $sbO->create_index(); #generally only needs to be called once
+
+            my $content="<p>blah blah blah in XHTM</p><p><b>Better</b> when done in
+            HTML!</p>";
+            my $title  = 'some title';
+            my $author = 'a.n. author';
+            my $email  = 'anaouthor@somedomain.net';
+            my $smmry  = 'blah blah';
+            $sbO->add($title,$author,$email,$smmry,$content);
+
+            my $format = {
+                    simple_blog_wrap => '<table width='100%'><tr><td>',
+                    simple_blog => '<div class="box">',
+                    title       => '<div class="title"><b>',
+                    author      => '<div class="author">',
+                    email       => '<div class="email">',
+                    ts          => '<div class="ts">',
+                    summary     => '<div class="summary">',
+                    content     => '<div class="content">',
+            };
+            $sbO->render_current($format,3);
+            $sbO->render_all($format);
+            $sbO->remove('08');
+            exit;
+
+DEPENDENCIES
+    Blog::Simple
+
+EXPORT
+    None by default.
+
+DESCRIPTION
+    This is a sub-class of "Blog::Simple", indentical in all but the need
+    for "XML::XSLT", which an amazingly cheeky ISP - the English company,
+    TheHostForYou.com - is trying to charge me to install!
+
+    So, instead of "XML::XSLT", this module uses "HTML::TokeParser", of the
+    core distribution. Naturally formatting is rather restricted, but it can
+    produce some useful results if you know your way around CSS
+    (<http://www.zvon.org|http://www.zvon.org>), and is better than a poke
+    in the eye with a sharp stick.
+
+USAGE
+    The rendering mthods "render_current" and "render_all" no longer take a
+    paramter of an XSLT file, but instead a reference to a hash, the keys of
+    which are the names of the nodes in a "Blog::Simple" XML file, values
+    being HTML to wrap around the named node.
+
+    Only the opening tags need be supplied: the correct end-tags will
+    supplied in lower-case.
+
+    For an example, please see the "SYNOPSIS".
+
+OTHER MODIFICATIONS
+    The only other things I've changed are:
+
+    *   The render routines "flock" if not running on Win32.
+
+    *   The render routines return a reference to a scalar, which is the
+        formatted HTML.
+
+DOCUMENTATION
+    The remaining interface is identical to the parent module: see
+    Blog::Simple.
+
+SEE ALSO
+    See Blog::Simple, HTML::TokeParser.
+
+AUTHOR
+    Lee Goddard (lgoddard -at- cpan -dot- org), based on work by J. A.
+    Robson, <gilad@arbingersys.com>
+
+COPYRIGHT
+    This module: Copyright (C) Lee Goddard, 2003. All Rights Reserved. Made
+    available under the same terms as Perl itself.
+
+
