@@ -1,7 +1,5 @@
-Blog::Simple::HTMLOnly Version 0.1
-----------------------------------
-
-Simple weblog (blogger) with just Core modules.
+NAME
+    Blog::Simple::HTMLOnly - Very simple blogger using Core modules.
 
 SYNOPSIS
             my $sbO = Blog::Simple::HTMLOnly->new();
@@ -30,25 +28,32 @@ SYNOPSIS
             $sbO->remove('08');
             exit;
 
+    Please see the *.cgi files included in the tar distribution for examples
+    of simple use.
+
 DEPENDENCIES
-    Blog::Simple
+    None.
 
 EXPORT
-    None by default.
+    None.
 
 DESCRIPTION
-    This is a sub-class of "Blog::Simple", indentical in all but the need
-    for "XML::XSLT", which an amazingly cheeky ISP - the English company,
-    TheHostForYou.com - is trying to charge me to install!
+    This is a backwards-compatible modification of "Blog::Simple" by JA
+    Robson <gilad@arbingersys.com>, indentical in all but the need for
+    "XML::XSLT" and Perl 6.1. It also includes an additional method to
+    render a specific blog.
 
-    So, instead of "XML::XSLT", this module uses "HTML::TokeParser", of the
-    core distribution. Naturally formatting is rather restricted, but it can
+    Instead of "XML::XSLT", this module uses "HTML::TokeParser", of the core
+    distribution. Naturally formatting is rather restricted, but it can
     produce some useful results if you know your way around CSS
     (<http://www.zvon.org|http://www.zvon.org>), and is better than a poke
     in the eye with a sharp stick.
 
 USAGE
-    The rendering mthods "render_current" and "render_all" no longer take a
+    Please read the documentation for Blog::Simple before continuing, but
+    ignore the documentation for the rendering methods.
+
+    The rendering methods "render_current" and "render_all" no longer take a
     paramter of an XSLT file, but instead a reference to a hash, the keys of
     which are the names of the nodes in a "Blog::Simple" XML file, values
     being HTML to wrap around the named node.
@@ -56,51 +61,40 @@ USAGE
     Only the opening tags need be supplied: the correct end-tags will
     supplied in lower-case.
 
-    For an example, please see the "SYNOPSIS".
+    For an example, please see the SYNOPSIS.
 
-OTHER MODIFICATIONS
+ADDITIONAL METHOD: render_this_blog
+    Renders to "STDOUT" the nominated blogged.
+
+    In addition to the method's object reference, accepts a date and an
+    author, and a format hash (see above). The date should be in a
+    "localtime" output with spaces turned to underscores ("_").
+
+    On success, returns a reference to the Blog in HTML. On failure returns
+    "undef", sending a warning to "STDERR" if you have "warnings" on ("-w").
+
+OTHER MODIFICATIONS TO Blog::Simple
     The only other things I've changed are:
 
-    *   The render routines "flock" if not running on Win32.
+    *   All files "flock" if not running on Win32 (cygwin is ignored as I
+        don't know if it needs it; presumably it does, though).
 
     *   The render routines return a reference to a scalar, which is the
         formatted HTML.
 
-DOCUMENTATION
-    The remaining interface is identical to the parent module: see
-    Blog::Simple.
+        -item *
 
-DISPLAYING A SPECIFIC BLOG
-
-It's not in the original and so I'll not add it here.
-
-Make sure the date is a C<localtime> output with spaces
-turned to underscores (C<_>).
-
-	sub render_this_blog { my ($date,$author) = (shift,shift);
-		local *IN;
-		my $xmlString;
-		unless (open IN, $blogger->{blog_base}.$date."_".$author."/blog.xml"){
-			print "Could not find blog, <pre>",
-				$blogger->{blog_base}.$date."_".$author,
-				"</pre>";
-			return undef;
-		}
-		read IN,$xmlString,-s IN;
-		close IN;
-		my $html = $blogger->transform ($FORMAT,\$xmlString);
-		print $$html;
-	}
+        "for" loops simplified.
 
 SEE ALSO
     See Blog::Simple, HTML::TokeParser.
 
 AUTHOR
-    Lee Goddard (lgoddard -at- cpan -dot- org), based on work by J. A.
-    Robson, <gilad@arbingersys.com>
+    Lee Goddard (lgoddard -at- cpan -dot- org), Most of the work already
+    done by J. A. Robson, <gilad@arbingersys.com>
 
 COPYRIGHT
-    This module: Copyright (C) Lee Goddard, 2003. All Rights Reserved. Made
-    available under the same terms as Perl itself.
+    This module: Copyright (C) Lee Goddard, 2003, and J. A. Robson. All
+    Rights Reserved. Made available under the same terms as Perl itself.
 
 

@@ -5,13 +5,13 @@ use strict;
 use warnings;
 
 use vars qw/@ISA $VERSION/;
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 use HTML::TokeParser;
 
 =head1 NAME
 
-Blog::Simple::HTMLOnly - Simple weblog (blogger) with just Core modules.
+Blog::Simple::HTMLOnly - Very simple weblog (blogger) with just Core modules.
 
 =head1 SYNOPSIS
 
@@ -41,8 +41,7 @@ Blog::Simple::HTMLOnly - Simple weblog (blogger) with just Core modules.
 	$sbO->remove('08');
 	exit;
 
-Please see the *.cgi files included in the tar distribution
-for examples of simple use.
+Please see the *.cgi files included in the tar distribution for examples of simple use.
 
 =head1 DEPENDENCIES
 
@@ -78,7 +77,7 @@ XML file, values being HTML to wrap around the named node.
 Only the opening tags need be supplied: the correct end-tags will
 supplied in lower-case.
 
-For an example, please see the L</SYNOPSIS>.
+For an example, please see the L<SYNOPSIS>.
 
 =cut
 
@@ -110,10 +109,9 @@ sub render_current { my ($self, $format, $dispNum, $outFile) = (@_);
 
 	#open the 'blog.xml' files individually and concatenate into xmlString
 	my $xmlString = "<simple_blog_wrap>\n";
-	for (@getFiles) {
-		my $fil = $_;
+	foreach my $fil (@getFiles) {
 		my $preStr;
-		open (GF, "$fil") or die "$fil $!";
+		open (GF, "$fil") or die "Error opening $fil - $!";
 		flock *GF,2 if $^O ne 'MSWin32';
 		seek GF,0,0;       # rewind to the start
 		truncate GF, 0;	# the file might shrink!
@@ -150,7 +148,7 @@ sub render_current { my ($self, $format, $dispNum, $outFile) = (@_);
 
 sub render_all { my ($self, $format, $outFile) = @_;
 	#read in the blog entries from the 'bb.idx' file
-	open(BB, "$self->{blog_idx}") or die $self->{blog_idx};
+	open(BB, $self->{blog_idx}) or die 'Error opening idx '.$self->{blog_idx}." - $!";
 	flock *BB,2 if $^O ne 'MSWin32';
 	seek BB,0,0;       # rewind to the start
 	truncate BB, 0;	# the file might shrink!
@@ -158,17 +156,16 @@ sub render_all { my ($self, $format, $outFile) = @_;
 	while (<BB>) {
 		next if ($_ =~ /^\#/);
 		my @tmp = split(/\t/, $_);
-		push(@getFiles, $tmp[0]);
+		push (@getFiles, $tmp[0]);
 	}
 	close BB;
 	flock (*BB, 8) if $^O ne 'MSWin32';
 
 	#open the 'blog.xml' files individually and concatenate into xmlString
 	my $xmlString = "<simple_blog_wrap>\n";
-	for (@getFiles) {
-		my $fil = $_;
+	foreach my $fil (@getFiles) {
 		my $preStr;
-		open (GF, "$fil") or die "$fil";
+		open (GF, $fil) or die "Error opening $fil - $!";
 		flock *GF,2 if $^O ne 'MSWin32';
 		seek GF,0,0;       # rewind to the start
 		truncate GF, 0;	# the file might shrink!
@@ -284,21 +281,17 @@ sub render_this_blog { my ($self,$date,$author,$format) = (shift,shift,shift,shi
 #
 #################################################################
 
-sub new {
 #instantiate object, create dir/files under path
-
+sub new {
 	#get parameters
 	my ($obj, $pth) = @_;
 
-	if (not defined($pth)) { $pth = ""; }
+	Carp::croak 'You must supply a path as the sole argument.' if not $pth;
 
 	$pth =~ s/\\/\//g; #turn backslashes into forward
 
 	#add the final slash, if needed
-	if ($pth ne "") {
-		if ($pth !~ /\/$/) { $pth .= "/"; }
-	}
-	else { $pth = "./"; } #if no path passed, make it the current dir
+	$pth .= "/" if $pth !~ /\/$/;
 
 	#create object data structure
 	my %sBlog = (
@@ -316,12 +309,8 @@ sub new {
 	bless $sBRef, $obj;
 }
 
-sub create_index {
 #generate the 'bb.idx' file
-
-	my $obj = shift;
-
-	#create the blog index file
+sub create_index { my $obj = shift;
 	open(F, ">$obj->{blog_idx}") or die $obj->{blog_idx}, " ",$!;
     flock *F,2 if $^O ne 'MSWin32';
     seek F,0,0;       # rewind to the start
@@ -331,10 +320,8 @@ sub create_index {
 	flock (*F, 8) if $^O ne 'MSWin32';
 }
 
-sub add {
 #adds a blog to the 'b_base' directory
-
-	my ($obj, $title, $author, $email, $smmry, $content) = @_;
+sub add { my ($obj, $title, $author, $email, $smmry, $content) = @_;
 	local (*BF,*BB);
 
 	#handle undefined variables
@@ -349,6 +336,7 @@ sub add {
 
 	$content =~ s/\t/     /g; #remove any tabs in the content, summary
 	$smmry =~ s/\t/     /g;
+
 
 #The core blog XML template
 #==========================
@@ -374,7 +362,7 @@ END_BT
 	mkdir($unqDir);
 
 	#put 'blog.xml' in it
-	open(BF, ">$unqDir"."blog.xml") or die "$unqDir"."blog.xml";
+	open(BF, ">$unqDir"."blog.xml") or die "Could not open to write $unqDir/blog.xml - $!";
     flock *BF,2 if $^O ne 'MSWin32';
     seek BF,0,0;       # rewind to the start
     truncate BF, 0;	# the file might shrink!
@@ -383,7 +371,7 @@ END_BT
 	flock (*BF, 8) if $^O ne 'MSWin32';
 
 	#save entry to 'bb.idx'
-	open(BB, "$obj->{blog_idx}") or die "$obj->{blog_idx}";
+	open(BB, $obj->{blog_idx}) or die "Could not open $obj->{blog_idx} - $!";
     flock *BB,2 if $^O ne 'MSWin32';
     seek BB,0,0;       # rewind to the start
     truncate BB, 0;	# the file might shrink!
@@ -392,9 +380,9 @@ END_BT
 	close BB;
 	flock (*BB, 8) if $^O ne 'MSWin32';
 
-	my $curLine = "$unqDir"."blog.xml\t$ts\t$title\t$author\t$smmry\n";
+	my $curLine = "${unqDir}blog.xml\t$ts\t$title\t$author\t$smmry\n";
 
-	open(BB, ">$obj->{blog_idx}") or die "Writing $obj->{blog_idx}";
+	open(BB, ">$obj->{blog_idx}") or die "Error writing $obj->{blog_idx} - $!";
     flock *BB,2 if $^O ne 'MSWin32';
     seek BB,0,0;       # rewind to the start
     truncate BB, 0;	# the file might shrink!
@@ -403,43 +391,41 @@ END_BT
 	flock (*BB, 8) if $^O ne 'MSWin32';
 }
 
-sub remove {
 #remove entry from bb.idx
 #the parameter passed is a regular expression. This way, multiple entries
 #can be removed simultaneously. Only removes entries from the 'bb.idx' file
 #and returns the paths that need to be removed as an array.
-
+sub remove {
 	my ($obj, $rex) = @_;
 	local (*RB);
 
 	if (defined($rex)) {
-	my @bbI;
-	my @delF;
+		my @bbI;
+		my @delF;
 
-	#get the index, check for matches, return only those lines
-	#that do not match
-	open(RB, "$obj->{blog_idx}") or die $obj->{blog_idx};
-    flock *RB,2 if $^O ne 'MSWin32';
-    seek RB,0,0;       # rewind to the start
-    truncate RB, 0;	# the file might shrink!
-	for (<RB>) {
-		my $chk = $_;
-		if ($chk =~ /$rex/) {
-			#do the removal code
-			my @lA = split(/\t/, $chk);
-			push(@delF, $lA[0]);
+		#get the index, check for matches, return only those lines
+		#that do not match
+		open(RB, $obj->{blog_idx}) or die 'Could not open '.$obj->{blog_idx}.' '.$!;
+		flock *RB,2 if $^O ne 'MSWin32';
+		seek RB,0,0;       # rewind to the start
+		truncate RB, 0;	# the file might shrink!
+		foreach my $chk (<RB>) {
+			if ($chk =~ /$rex/) {
+				#do the removal code
+				my @lA = split(/\t/, $chk);
+				push(@delF, $lA[0]);
+			}
+			else { push(@bbI, $_); }
 		}
-		else { push(@bbI, $_); }
-	}
-	close RB;
-	flock (*RB, 8) if $^O ne 'MSWin32';
+		close RB;
+		flock (*RB, 8) if $^O ne 'MSWin32';
 
-	#write the new index
-	open(RB, ">$obj->{blog_idx}") or die $obj->{blog_idx};
-	print RB @bbI;
-	close RB;
+		#write the new index
+		open(RB, ">".$obj->{blog_idx}) or die 'Could not open to write to '.$obj->{blog_idx}.' '.$!;
+		print RB @bbI;
+		close RB;
 
-	$obj->{del_list} = \@delF;
+		$obj->{del_list} = \@delF;
 	} #defined($rex)
 
 }
@@ -467,6 +453,10 @@ though).
 The render routines return a reference to a scalar,
 which is the formatted HTML.
 
+-item *
+
+C<for> loops simplified.
+
 =back
 
 =head1 SEE ALSO
@@ -476,7 +466,7 @@ See L<Blog::Simple>, L<HTML::TokeParser>.
 =head1 AUTHOR
 
 Lee Goddard (lgoddard -at- cpan -dot- org),
-based on work by J. A. Robson, E<lt>gilad@arbingersys.comE<gt>
+Most of the work already done by J. A. Robson, E<lt>gilad@arbingersys.comE<gt>
 
 =head1 COPYRIGHT
 

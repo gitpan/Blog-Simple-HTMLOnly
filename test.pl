@@ -1,9 +1,3 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
-#########################
-
-# change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
 use strict;
@@ -14,8 +8,20 @@ use Blog::Simple::HTMLOnly;
 ok(1); # If we made it this far, we're ok.
 
 #########################
+my $tmp;
+foreach ($ENV{TEMP}, $ENV{TMP}, '/tmp', '/temp', '/usr/tmp', 'C:/temp'){
+	next if not defined $_;
+	$tmp = $_;
+	last if -d $tmp;
+}
 
-my $sbO = Blog::Simple::HTMLOnly->new();
+if ( not defined $tmp){
+	print "Skip all - no temporary directory found.\n";
+	exit;
+}
+
+
+my $sbO = Blog::Simple::HTMLOnly->new($tmp);
 ok( ref $sbO, "Blog::Simple::HTMLOnly");
 $sbO->create_index(); #generally only needs to be called once
 

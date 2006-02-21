@@ -1,5 +1,4 @@
-#! perl
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 #
 # blog.cgi        			- display the current blog
@@ -23,17 +22,24 @@ use HTML::Calendar::Simple;
 use CGI 2.47 qw/:standard/;
 use Cwd;
 
-my ($TEMPLATE_TOP,$TEMPLATE_BOTTOM);
+my $PASSWORD = 'shalom3761!';
 
-my $cgi 	= new CGI;
+my $TEMPLATE_PATH = "/home/leeg1644/public_html/blank.html";
+
+my $BLOG_DIR = {
+	Polar 	=> '/home/leeg1644/private_data/Polar_Blog',
+	Lee		=> "/home/leeg1644/private_data/Lee_Blog",
+};
+
+my ($TEMPLATE_TOP, $TEMPLATE_BOTTOM, $FORMAT, $TITLE);
+
+my $cgi 	= CGI->new;
 my $blogger;
-my ($FORMAT,$TITLE,$TEMPLATE_PATH);
 
 # Set blog-base by author
 if ($cgi->param('author') and $cgi->param('author') eq 'Polar'){
-	$blogger = new Blog::Simple::HTMLOnly("./Polar_Blog/");
+	$blogger = Blog::Simple::HTMLOnly->new($BLOG_DIR->{$cgi->param('author')});
 	$TITLE = "Weblog";
-	$TEMPLATE_PATH = "../paula/blank.html";
 	$FORMAT = {
 		simple_blog_wrap => '<div>',
 		simple_blog => '<div style="font-family:Arial">',
@@ -45,9 +51,8 @@ if ($cgi->param('author') and $cgi->param('author') eq 'Polar'){
 		content     => '<div style="font-size:10px">',
 	};
 } else {
-	$blogger = new Blog::Simple::HTMLOnly("./Lee_Blog");
+	$blogger = Blog::Simple::HTMLOnly->new($BLOG_DIR->{$cgi->param('author') || 'Lee'});
 	$TITLE = 'Moaning&nbsp;and Groaing at the Edge of ...';
-	$TEMPLATE_PATH = "../blank.html";
 	$FORMAT = {
 		simple_blog_wrap => '<div>',
 		simple_blog => '<div style="width:100%;padding:1em;border:1px double olive;margin-bottom:1em;">',
@@ -64,12 +69,11 @@ if (!-e $blogger->{blog_idx}){
 	$blogger->create_index();
 	$blogger->add(
 		"Blogging...",
-		($cgi->param('author') and $cgi->param('author') eq 'Polar'? 'Polar':'Lee'),
+		$cgi->param('author'),
 		'code@leegoddard.com',
 		'Started to blog',
 		"<p>This is the first blog using Perl module <code>"
-		.__PACKAGE__.", which I sub-classed from <code>Blog::Simple</code>
-		and put on CPAN.</p>"
+		.__PACKAGE__."</code>, which I sub-classed from <code>Blog::Simple</code> and put on CPAN.</p>"
 	);
 }
 
@@ -103,7 +107,7 @@ if ($ENV{QUERY_STRING}){
 		and $cgi->param('summary') and $cgi->param('summary') ne ''
 		and $cgi->param('content') and $cgi->param('content') ne ''
 	){
-		if (not $cgi->param('password') or $cgi->param('password') ne 'shalom3761'){
+		if (not $cgi->param('password') or $cgi->param('password') ne $PASSWORD){
 			&form('You either supplied the wrong password or none at all.');
 		} else {
 			my $content = &format_text($cgi->param('content')) ;
@@ -134,7 +138,7 @@ exit;
 
 sub print_header {
 	local (*IN,$_);
-	open IN,$TEMPLATE_PATH or die "Could not open ../blank.html from ".cwd;
+	open IN,$TEMPLATE_PATH or die "Could not open $TEMPLATE_PATH from dir ".cwd;
 	read IN,$_,-s IN;
 	close IN;
 	($TEMPLATE_TOP,$TEMPLATE_BOTTOM) = /^(.*)<!--\sinsert.*?-->(.*)$/sig;

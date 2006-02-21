@@ -1,4 +1,3 @@
-#! perl
 #! /usr/bin/perl
 
 #
@@ -9,7 +8,8 @@
 # All Rights Reserved. Available under the same terms as Perl.
 #
 
-my $VERSION = 0.1;
+my $VERSION = 0.2;
+
 use strict;
 use CGI::Carp qw(fatalsToBrowser);
 use Blog::Simple::HTMLOnly;
@@ -21,16 +21,21 @@ my ($TEMPLATE_TOP,$TEMPLATE_BOTTOM);
 
 my $cgi 	= new CGI;
 my $blogger = new Blog::Simple::HTMLOnly;
-my ($TITLE,$TEMPLATE_PATH);
+my ($TITLE, $TEMPLATE_PATH);
+
+my $TEMPLATE_PATH = "/home/leeg1644/public_html/blank.html";
+my $BLOG_DIR = {
+	Polar 	=> '/home/leeg1644/private_data/Polar_Blog',
+	Lee		=> "/home/leeg1644/private_data/Lee_Blog",
+};
 
 if ($cgi->param('author') and $cgi->param('author') eq 'Polar'){
-	$blogger = new Blog::Simple::HTMLOnly("./Polar_Blog/");
+	$blogger = new Blog::Simple::HTMLOnly($BLOG_DIR->{$cgi->param('author')});
 	$TITLE = "Weblog";
-	$TEMPLATE_PATH = "../paula/blank.html";
 } else {
-	$blogger = new Blog::Simple::HTMLOnly("./Lee_Blog");
+	my $a = $cgi->param('author') || 'Lee';
+	$blogger = new Blog::Simple::HTMLOnly($BLOG_DIR->{$a});
 	$TITLE = 'Moaning&nbsp;and Groaing at the Edge of ...';
-	$TEMPLATE_PATH = "../blank.html";
 }
 
 if ($cgi->param('template') and $cgi->param('template') eq 'false'){
