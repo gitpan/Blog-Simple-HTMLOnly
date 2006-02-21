@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use vars qw/@ISA $VERSION/;
-$VERSION = '0.03';
+$VERSION = '0.031';
 
 use HTML::TokeParser;
 

@@ -22,7 +22,7 @@ use HTML::Calendar::Simple;
 use CGI 2.47 qw/:standard/;
 use Cwd;
 
-my $PASSWORD = 'shalom3761!';
+my $PASSWORD = 'password';
 
 my $TEMPLATE_PATH = "/home/leeg1644/public_html/blank.html";
 
@@ -70,7 +70,7 @@ if (!-e $blogger->{blog_idx}){
 	$blogger->add(
 		"Blogging...",
 		$cgi->param('author'),
-		'code@leegoddard.com',
+		'me@example.com',
 		'Started to blog',
 		"<p>This is the first blog using Perl module <code>"
 		.__PACKAGE__."</code>, which I sub-classed from <code>Blog::Simple</code> and put on CPAN.</p>"
@@ -181,7 +181,7 @@ sub form { my $err=shift;
 		"</td></tr><tr><td>",
 		"E-mail: </td><td>", textfield(
 			-name=>'email',
-			-default=>'blog@leegoddard.com',
+			-default=>'me@example.com',
 			-size=>65,
 			-maxlength=>65
 		),
