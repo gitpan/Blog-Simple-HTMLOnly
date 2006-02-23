@@ -1,4 +1,9 @@
 Revision history for Perl extension Blog::Simple::HTMLOnly.
+0.04  Thu Feb 23 12:12:12 2006
+	- added and updated methods
+	- allowed redner_this_blog date to include wildcards to show all blogs for a certain day
+	- updated examples
+	
 0.03  Tue Feb 21 18:18:18 2006
 	- tidied some errors found when installing anew
 	- everything had PC line-endings, for some reason.

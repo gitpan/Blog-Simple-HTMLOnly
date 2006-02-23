@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use vars qw/@ISA $VERSION/;
-$VERSION = '0.031';
+$VERSION = '0.04'; # added render latest
 
 use HTML::TokeParser;
 
@@ -15,17 +15,22 @@ Blog::Simple::HTMLOnly - Very simple weblog (blogger) with just Core modules.
 
 =head1 SYNOPSIS
 
-	my $sbO = Blog::Simple::HTMLOnly->new();
-	$sbO->create_index(); #generally only needs to be called once
-
+	my $blog = Blog::Simple::HTMLOnly->new();
+	$blog->create_index(); # generally only needs to be called once
+	#
+	# ...
+	#
 	my $content="<p>blah blah blah in XHTM</p><p><b>Better</b> when done in
 	HTML!</p>";
 	my $title  = 'some title';
 	my $author = 'a.n. author';
 	my $email  = 'anaouthor@somedomain.net';
 	my $smmry  = 'blah blah';
-	$sbO->add($title,$author,$email,$smmry,$content);
-
+	my $ctent  = '<blockquote>Twas in the month of Liverpool and the city of July...</blockquote>',
+	$blog->add($title,$author,$email,$smmry,$ctent);
+	#
+	# ...
+	#
 	my $format = {
 		simple_blog_wrap => '<table width='100%'><tr><td>',
 		simple_blog => '<div class="box">',
@@ -36,27 +41,27 @@ Blog::Simple::HTMLOnly - Very simple weblog (blogger) with just Core modules.
 		summary     => '<div class="summary">',
 		content     => '<div class="content">',
 	};
-	$sbO->render_current($format,3);
-	$sbO->render_all($format);
-	$sbO->remove('08');
+	$blog->render_current($format,3);
+	$blog->render_all($format);
+	$blog->remove('08');
 	exit;
 
 Please see the *.cgi files included in the tar distribution for examples of simple use.
 
 =head1 DEPENDENCIES
 
-None.
+Nothing outside of the core perl distribution.
 
 =head1 EXPORT
 
-None.
+Nothing.
 
 =head1 DESCRIPTION
 
 This is a backwards-compatible modification of C<Blog::Simple>
 by JA Robson <gilad@arbingersys.com>, indentical in all but
-the need for C<XML::XSLT> and Perl 6.1. It also includes an additional
-method to render a specific blog.
+the need for C<XML::XSLT> and Perl 5.6.1. It also includes an additional
+method to render a specific blog, and the latest C<n> blogs.
 
 Instead of C<XML::XSLT>, this module uses C<HTML::TokeParser>,
 of the core distribution. Naturally formatting is rather restricted,
@@ -75,7 +80,7 @@ the keys of which are the names of the nodes in a C<Blog::Simple>
 XML file, values being HTML to wrap around the named node.
 
 Only the opening tags need be supplied: the correct end-tags will
-supplied in lower-case.
+supplied in lower-case by this module.
 
 For an example, please see the L<SYNOPSIS>.
 
@@ -84,23 +89,37 @@ For an example, please see the L<SYNOPSIS>.
 #this method takes a predetermined number of blogs from the top of the 'bb.idx' file
 #and generates an output file (HTML). The $format argument is explained in the POD
 #
+
+=head2 METHOD render_current_by_author
+
+As C<METHOD render_current> but accepts a format hash, number of entries to display,
+an optional B<author ID>, and optional output file.
+
+=cut
+
+sub render_current_by_author { my ($self, $format, $dispNum, $author, $outFile) = (@_);
+	$self->{_show_author} = $author;
+	return $self->render_current($format, $dispNum, $outFile);
+}
+
 sub render_current { my ($self, $format, $dispNum, $outFile) = (@_);
-	#make sure we're getting a reasonable number of blogs to print
-	if ($dispNum < 1) { $dispNum = 1; }
+	local *BB;
+	# make sure we're getting a reasonable number of blogs to print
+	$dispNum = 1 if $dispNum < 1;
 
 	#read in the blog entries from the 'bb.idx' file
-	unless (open BB, "$self->{blog_idx}"){
-		die "No blog index $self->{blog_idx}: $!, caller:"
-		.(join" ",caller);
+	unless (open BB, $self->{blog_idx}){
+		die "No blog index $self->{blog_idx}: $!, caller:" .(join" ",caller);
 	}
     flock *BB,2 if $^O ne 'MSWin32';
-    seek BB,0,0;       # rewind to the start
-    truncate BB, 0;	# the file might shrink!
+    seek BB,0,0;    	# rewind to the start
+    truncate BB, 0;		# the file might shrink!
 	my @getFiles;
 	my $cnt=0;
 	while (<BB>) {
 		next if (($cnt == $dispNum) || ($_ =~ /^\#/));
 		my @tmp = split(/\t/, $_);
+		next if defined $self->{_show_author} and $tmp[3] ne $self->{_show_author};
 		push(@getFiles, $tmp[0]);
 		$cnt++;
 	}
@@ -156,10 +175,12 @@ sub render_all { my ($self, $format, $outFile) = @_;
 	while (<BB>) {
 		next if ($_ =~ /^\#/);
 		my @tmp = split(/\t/, $_);
+		next if defined $self->{_show_author} and $tmp[3] ne $self->{_show_author};
 		push (@getFiles, $tmp[0]);
 	}
 	close BB;
 	flock (*BB, 8) if $^O ne 'MSWin32';
+
 
 	#open the 'blog.xml' files individually and concatenate into xmlString
 	my $xmlString = "<simple_blog_wrap>\n";
@@ -195,15 +216,30 @@ sub render_all { my ($self, $format, $outFile) = @_;
 }
 
 
+=head2 METHOD render_all_by_author
+
+Identical to C<render_all> but takes an additional argument, that is the author ID.
+
+=cut
+
+sub render_all_by_author { my ($self, $format, $author, $outFile) = @_;
+	$self->{_show_author} = $author;
+	return $self->render_all($format, $outFile);
+}
+
+
+
 # Transform XML to HTML
 # Accepts: reference to a 'formatting' hash; reference to a string of XML
 # Returns: reference to a string of HTML
-sub transform { my ($self,$format,$xml) = (shift,shift,shift);
+sub transform { my ($self, $format, $xml) = (shift, shift, shift);
+	local $_;
+
 	if (not defined $format or ref $format ne 'HASH'){
-		die "transform takes two arguments, the first being a hash reference for formatting";
+		Carp::confess "transform takes two arguments, the first being a hash reference for formatting";
 	}
 	if (not defined $xml or ref $xml ne 'SCALAR'){
-		die "transform takes two arguments, the second being a scalar reference of XML";
+		Carp::confess "transform takes two arguments, the second being a scalar reference of XML";
 	}
 	my $open = {};
 	my $html;
@@ -215,11 +251,12 @@ sub transform { my ($self,$format,$xml) = (shift,shift,shift);
 		}
 	}
 
-	# warn "XML: $$xml\n\n";
 	my $p = HTML::TokeParser->new($xml);
 	my @current;
+	#	use Data::Dumper; die Dumper $xml,$format; #simple_blog_wrap|simple_blog|ts|
+
 	while (my $t = $p->get_token){
-		if (@$t[0] eq 'S' and @$t[1] =~ /^(title|author|email|summary|content)$/){
+		if (@$t[0] eq 'S' and @$t[1] =~ /^(simple_blog_wrap|simple_blog|ts|title|author|email|summary|content)$/){
 			# warn "Open ",@$t[1],"\n" if $^W;
 			push @current, @$t[1];
 			$html .= $format->{@$t[1]} if exists $format->{@$t[1]};
@@ -228,7 +265,7 @@ sub transform { my ($self,$format,$xml) = (shift,shift,shift);
 			# warn "Text @$t[1]","\n" if $^W;
 			$html .= @$t[1] . $p->get_text;
 		}
-		elsif (@$t[0] eq 'E' and @$t[1] =~ /^(title|author|email|summary|content)$/){
+		elsif (@$t[0] eq 'E' and @$t[1] =~ /^(simple_blog_wrap|simple_blog|ts|title|author|email|summary|content)$/){
 			# warn "Close @$t[1] with ", join",",@{$open->{$current[$#current]}},"\n"  if $^W;
 			$html .= join '',( map {"</$_>"} reverse @{$open->{$current[$#current]}}) if $open->{$current[$#current]};
 			pop @current;
@@ -244,9 +281,13 @@ sub transform { my ($self,$format,$xml) = (shift,shift,shift);
 }
 
 
-=head1 ADDITIONAL METHOD: render_this_blog
+=head2 METHOD: render_these_blogs
 
-Renders to C<STDOUT> the nominated blogged.
+Alias for C<render_this_blog>.
+
+=head2 METHOD: render_this_blog
+
+Renders to C<STDOUT> the nominated blog(s).
 
 In addition to the method's object reference, accepts
 a date and an author, and a format hash (see above).
@@ -259,18 +300,31 @@ if you have C<warnings> on (C<-w>).
 
 =cut
 
+sub render_these_blogs {
+	my $self=shift;
+	return $self->render_this_blog(@_);
+}
+
 sub render_this_blog { my ($self,$date,$author,$format) = (shift,shift,shift,shift);
-	local *IN;
-	my $xmlString;
-	unless (open IN, $self->{blog_base}.$date."_".$author."/blog.xml"){
-		warn "Could not find blog, <pre>",
-			$self->{blog_base}.$date."_".$author,
-			"</pre>" if $^W;
-		return undef;
+	local (*IN, *DIR);
+	my ($html);
+	$date =~ s/[^\w\d_\*]//sg;
+	$date =~ s/\*/\.\*\?/g;
+	opendir DIR, $self->{blog_base};
+	my @dirs = grep {/^$date$/} readdir DIR;
+	closedir DIR;
+	foreach my $dir (reverse sort @dirs){
+		unless (open IN, $self->{blog_base}.$dir.'/blog.xml'){
+			warn "Could not find blog, <pre>",
+				$self->{blog_base}.$date."_".$author,
+				"</pre>" if $^W;
+			return undef;
+		}
+		my $xmlString;
+		read IN,$xmlString,-s IN;
+		close IN;
+		$$html .= ${ $self->transform ($format,\$xmlString) };
 	}
-	read IN,$xmlString,-s IN;
-	close IN;
-	my $html = $self->transform ($format,\$xmlString);
 	print $$html;
 	return $html;
 }
@@ -359,10 +413,10 @@ END_BT
 	my $unqDir = $obj->{blog_base} . $tmp . "_" . $tmpA . "/";
 
 	#create the directory
-	mkdir($unqDir);
+	mkdir $unqDir or die 'Could not mkdir '.$unqDir.' - '. $!;
 
 	#put 'blog.xml' in it
-	open(BF, ">$unqDir"."blog.xml") or die "Could not open to write $unqDir/blog.xml - $!";
+	open(BF, ">${unqDir}blog.xml") or die "Could not open to write $unqDir/blog.xml - $!";
     flock *BF,2 if $^O ne 'MSWin32';
     seek BF,0,0;       # rewind to the start
     truncate BF, 0;	# the file might shrink!

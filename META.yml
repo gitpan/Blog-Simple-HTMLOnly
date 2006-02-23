@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Blog-Simple-HTMLOnly
-version:      0.031
+version:      0.04
 version_from: HTMLOnly.pm
 installdirs:  site
 requires:

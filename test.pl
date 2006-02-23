@@ -3,7 +3,7 @@ use Test;
 use strict;
 use HTML::TokeParser;
 
-BEGIN { plan tests => 6 };
+BEGIN { plan tests => 13 };
 use Blog::Simple::HTMLOnly;
 ok(1); # If we made it this far, we're ok.
 
@@ -49,8 +49,27 @@ my $p = HTML::TokeParser->new($html);
 ok( ref $p->get_tag("b"), 'ARRAY');
 ok( $p->get_trimmed_text, 'some title');
 
-ok( ref $sbO->render_all($format), 'SCALAR');
+my $r = $sbO->render_all($format);
+ok( ref $r, 'SCALAR');
+
+ok( $$r =~ m|\Q<div class="box">|);
+ok( $$r =~ m|\Q<div class="title"><b>some title</b></div>|);
+ok( $$r =~ m|\Q<div class="author">a.n. author</div>|);
+ok( $$r =~ m|\Q<div class="email">anaouthor\E\@\Qsomedomain.net</div>|);
+ok( $$r =~ m|\Q<div class="ts">|);
+ok( $$r =~ m|\Q<div class="summary">blah blah</div>|);
+ok( $$r =~ m|\Q<div class="content"><p>blah blah blah in XHTM</p><p><b>Better</b> when|);
 
 exit;
 __END__
 
+<div class="box">
+        <div class="title"><b>some title</b></div>
+        <div class="author">a.n. author</div>
+        <div class="email">anaouthor@somedomain.net</div>
+        <div class="ts">Thu Feb 23 15:23:00 2006</div>
+        <div class="summary">blah blah</div>
+        <div class="content"><p>blah blah blah in XHTM</p><p><b>Better</b> when
+done in
+HTML!</p></div>
+</div>

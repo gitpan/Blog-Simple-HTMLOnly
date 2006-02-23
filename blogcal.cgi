@@ -17,17 +17,17 @@ use HTML::Calendar::Simple;
 use CGI 2.47 qw/:standard/;
 use Cwd;
 
-my ($TEMPLATE_TOP,$TEMPLATE_BOTTOM);
 
-my $cgi 	= new CGI;
-my $blogger = new Blog::Simple::HTMLOnly;
-my ($TITLE, $TEMPLATE_PATH);
 
-my $TEMPLATE_PATH = "/home/leeg1644/public_html/blank.html";
+my $cgi 	= CGI->new;
+my $PASSWORD = 'password!';
+my $win = $^O =~ /win/i;
+my $TEMPLATE_PATH = $win? 'D:/www/leegoddard_net/blank.html' : "/home/leeg1644/public_html/blank.html";
 my $BLOG_DIR = {
-	Polar 	=> '/home/leeg1644/private_data/Polar_Blog',
-	Lee		=> "/home/leeg1644/private_data/Lee_Blog",
+	Polar 	=> $win? 'D:/www/paulacska_com/.blog/' : '/home/leeg1644/private_data/Polar_Blog',
+	Lee		=> $win? 'D:/www/leegoddard_net/.blog/' : "/home/leeg1644/private_data/Lee_Blog",
 };
+my ($TEMPLATE_TOP, $TEMPLATE_BOTTOM, $FORMAT, $TITLE, $blogger);
 
 if ($cgi->param('author') and $cgi->param('author') eq 'Polar'){
 	$blogger = new Blog::Simple::HTMLOnly($BLOG_DIR->{$cgi->param('author')});
@@ -45,9 +45,10 @@ if ($cgi->param('template') and $cgi->param('template') eq 'false'){
 	&print_header
 }
 
-&show_calendar;
+&print_calendar;
 
 &print_footer unless $cgi->param('template') and $cgi->param('template') eq 'false';
+
 exit;
 
 
@@ -64,33 +65,35 @@ sub print_header {
 
 sub print_footer { print $TEMPLATE_BOTTOM }
 
-sub show_calendar {
-	local (*DIR);
+sub print_calendar {
+	local (*DIR, @_, $_);
 	my $done;
 	my $author = $cgi->param('author') || "Lee";
-	my $cal = new HTML::Calendar::Simple;
-	$_ = scalar (localtime);
+	my $cal = HTML::Calendar::Simple->new;
+	$_ = scalar localtime;
 	my @date = split/\s+/,$_;
 
 	chdir $blogger->{blog_base};
 	opendir DIR, "." or die "No blog base dir";
 	@_ = grep { -d && /^\w{3}_+$date[1].*?$date[4]_\Q$author\E$/ } readdir DIR;
 	closedir DIR;
+
 	foreach (@_){
 		my 	@date = split/_+/,$_;
 		next if exists $done->{$date[2]};
 		s/_$author$//;
 		$done->{$date[2]} = 1;
+		my ($daydate) = ($_ =~ m/^(\w\w\w_\w\w\w_+\d+)/);
+		$daydate .= '*';
 		$cal->daily_info({
 			'day' => $date[2],
-			'day_link' => "javascript:parent.location.href='/cgi-bin/blog.cgi?author=$author&date=$_';void(0)",
+			'day_link' => "javascript:parent.location.href='/cgi-bin/blog.cgi?author=$author&date=$daydate';void(0)",
 		});
 	}
 
-	# print $cal;
 	print "
 	<style type='text/css'>
-	.cal table { padding:0; margin:0; border:none }
+	.cal table { border-collapse: collapse; padding:0; margin:0; border:none }
 	.cal a {
 		position:relative;
 		color:black;
@@ -98,6 +101,7 @@ sub show_calendar {
 		width:100%;
 		height:100%;
 		text-decoration:none;
+		background: lime;
 	}
 	.cal a:hover {
 		background:black;
@@ -109,14 +113,17 @@ sub show_calendar {
 		font-family: Verdana, Arial, Helvetica, sans
 	}
 	.cal td, .cal h3 { font-size: 8px; padding:0; margin:0;}
-	.cal th { font-size: 8px; border:0; }
+	.cal h3 { font-size: 10px; }
+	.cal td { padding: 2px; text-align:right}
+	.cal th { font-size: 8px; border:none; padding: 1px}
 	</style>
 	<div class='cal'>
 	";
-	print $cal->calendar_month if $cal;
+	print $cal->calendar_month;
 	print "
 	</div>
 	"
+
 }
 
 
