@@ -1,4 +1,8 @@
 Revision history for Perl extension Blog::Simple::HTMLOnly.
+
+0.05	2002-01-03
+	Depends in Makefile.PL
+
 0.04  Thu Feb 23 12:12:12 2006
 	- added and updated methods
 	- allowed redner_this_blog date to include wildcards to show all blogs for a certain day

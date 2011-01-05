@@ -4,6 +4,9 @@ use ExtUtils::MakeMaker;
 WriteMakefile(
     'NAME'		=> 'Blog::Simple::HTMLOnly',
     'VERSION_FROM'	=> 'HTMLOnly.pm', # finds $VERSION
+    PREREQ_PM   => {
+	'HTML::TokeParser'	=> '0', # or a minimum working version
+    },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'HTMLOnly.pm', # retrieve abstract from module
        AUTHOR     => 'Lee Goddard <lgoddard -at- cpan -dot- org>') : ()),
